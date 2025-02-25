@@ -176,14 +176,13 @@ class Robot:
 
         # Position controller. (Add neural-fly here)
         if pd:
-            k_p = 5.0
-            k_d = 7.0
+            k_p = 1.0
+            k_d = 10.0
             v_r = - k_p * (p_I - p_d_I)
             a = -k_d * (v_I - v_r) + np.array([0, 0, 9.81])
             f = self.m * a  
         else:
             phi = self.phi.detach().numpy()
-            phi=0
             phiarr  = np.zeros((3,9))
             phiarr[0,0:3] = phi
             phiarr[1,3:6] = phi
@@ -193,14 +192,14 @@ class Robot:
             ar = a_d_I - LAM @ (v_d_I-v_I)
             vr = v_d_I - LAM @ (p_d_I-p_I)
             self.s = v_I - vr 
-            # f = self.m * ar + np.array([0,0,9.8]) - K @ self.s -ff_term
+            f = self.m * ar + np.array([0,0,9.8]) - K @ self.s -ff_term
 
             k_p = 5.0
             k_d = 7.0
-            v_r = - k_p * (p_I - p_d_)
+            v_r = - k_p * (p_I - p_d_I)
             a = -k_d * (v_I - v_r) + np.array([0, 0, 9.81])
 
-            f = self.m * a + np.array([0,0,9.8]) - ff_term
+            # f = self.m * a + np.array([0,0,9.8]) - ff_term
 
         f_b = scipy.spatial.transform.Rotation.from_quat([q[1], q[2], q[3], q[0]]).as_matrix().T @ f
         thrust = np.max([0, f_b[2]])
@@ -273,11 +272,11 @@ def get_pos_full_quadcopter(quad):
 
 def control_propellers(quad, pd):
     t = quad.time
-    T = 5#np.pi/1.5
-    r = 2*np.pi * t / T
-    p_d_I = np.array([np.cos(r), 0.5*np.sin(2*r), 0.5*t])
-    v_d_I = np.array([-2*np.pi/T*np.sin(r), 2*np.pi/T*np.cos(2*r), 0.5])
-    a_d_I = np.array([-4*np.pi**2/T**2*np.cos(r), -8*np.pi**2/T**2*np.sin(2*r), 0])
+    T = np.pi/1.5
+    r = 2*np.pi/ T
+    p_d_I = np.array([np.cos(r*t), 0.5*np.sin(2*r*t), 0.5*t])
+    v_d_I = np.array([-r*np.sin(r*t), 2*r*np.cos(2*r*t), 0.5])
+    a_d_I = np.array([-r**2*np.cos(r), -4*r**2*np.sin(2*r), 0])
     
     # t = quad.time
     # T = 7
